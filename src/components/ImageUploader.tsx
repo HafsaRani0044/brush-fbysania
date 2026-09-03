@@ -10,6 +10,7 @@ interface ImageUploaderProps {
   required?: boolean;
   aspectRatio?: 'square' | 'portrait' | 'landscape' | 'banner';
   maxFiles?: number;
+  uploadImage?: (imageDataUrl: string) => Promise<string>;
 }
 
 // Preset luxury Pakistani dupatta photos for quick selection if needed
@@ -88,11 +89,13 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   required = false,
   aspectRatio = 'portrait',
   maxFiles = 6,
+  uploadImage,
 }) => {
   const [activeTab, setActiveTab] = useState<'upload' | 'url' | 'presets'>('upload');
   const [urlInput, setUrlInput] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Normalize current images array
@@ -111,6 +114,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   const handleFiles = async (files: FileList | File[]) => {
     if (!files || files.length === 0) return;
     setIsProcessing(true);
+    setUploadError(null);
 
     try {
       const newUrls: string[] = [];
@@ -119,7 +123,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
       for (const file of fileArray) {
         if (!file.type.startsWith('image/')) continue;
         const compressed = await compressImageFile(file);
-        newUrls.push(compressed);
+        newUrls.push(uploadImage ? await uploadImage(compressed) : compressed);
         if (!multiple) break;
       }
 
@@ -132,6 +136,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
         }
       }
     } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Image upload failed.');
       console.error('Error reading/compressing image:', err);
     } finally {
       setIsProcessing(false);
@@ -235,6 +240,10 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
       {/* TAB 1: FILE UPLOAD (DRAG & DROP + BROWSE) */}
       {activeTab === 'upload' && (
         <div>
+
+        {uploadError && (
+          <p className="text-xs font-medium text-red-600" role="alert">{uploadError}</p>
+        )}
           <div
             onDragOver={(e) => {
               e.preventDefault();

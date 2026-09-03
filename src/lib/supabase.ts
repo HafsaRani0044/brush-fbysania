@@ -18,12 +18,56 @@ export const isSupabaseConfigured = Boolean(
 );
 
 export let supabase: SupabaseClient | null = null;
+const SITE_IMAGES_BUCKET = 'site-images';
 
 if (isSupabaseConfigured) {
   try {
     supabase = createClient(supabaseUrl, supabaseAnonKey);
   } catch (err) {
     console.warn('Failed to initialize Supabase client:', err);
+  }
+}
+
+export async function uploadSiteImage(imageDataUrl: string, folder = 'bespoke'): Promise<string> {
+  if (!supabase) {
+    throw new Error('Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY before uploading images.');
+  }
+  const response = await fetch(imageDataUrl);
+  const blob = await response.blob();
+  const path = `${folder}/${crypto.randomUUID()}.jpg`;
+  const { error } = await supabase.storage.from(SITE_IMAGES_BUCKET).upload(path, blob, {
+    contentType: 'image/jpeg',
+    cacheControl: '31536000',
+    upsert: false,
+  });
+  if (error) {
+    throw new Error(`Image upload failed: ${error.message}`);
+  }
+  const { data } = supabase.storage.from(SITE_IMAGES_BUCKET).getPublicUrl(path);
+  if (!data.publicUrl) throw new Error('Image uploaded but no public URL was returned.');
+  return data.publicUrl;
+}
+
+function getSiteImagePaths(content: SiteContent): string[] {
+  const urls: string[] = [];
+  const collect = (value: unknown) => {
+    if (typeof value === 'string' && value.includes(`/storage/v1/object/public/${SITE_IMAGES_BUCKET}/`)) urls.push(value);
+    else if (Array.isArray(value)) value.forEach(collect);
+    else if (value && typeof value === 'object') Object.values(value).forEach(collect);
+  };
+  collect(content);
+  return urls;
+}
+
+async function deleteReplacedSiteImages(previous: SiteContent | null, current: SiteContent) {
+  if (!supabase || !previous) return;
+  const currentUrls = new Set(getSiteImagePaths(current));
+  const oldPaths = getSiteImagePaths(previous)
+    .filter((url) => !currentUrls.has(url))
+    .map((url) => url.split(`/storage/v1/object/public/${SITE_IMAGES_BUCKET}/`)[1])
+    .filter(Boolean);
+  if (oldPaths.length > 0) {
+    await supabase.storage.from(SITE_IMAGES_BUCKET).remove(oldPaths);
   }
 }
 
@@ -502,6 +546,7 @@ export async function getSiteContent(): Promise<SiteContent> {
 
 export async function updateSiteContent(content: SiteContent): Promise<SiteContent> {
   // Update in-memory reference immediately
+  const previousContent = inMemorySiteContent;
   inMemorySiteContent = { ...content };
 
   // IndexedDB supports the larger base64 images produced by the admin uploader.
@@ -540,9 +585,11 @@ export async function updateSiteContent(content: SiteContent): Promise<SiteConte
       if (rows.length > 0) {
         const { error } = await supabase.from('site_content').upsert(rows, { onConflict: 'key' });
         if (error) {
-          console.warn('Supabase site_content upsert note:', error.message);
+          inMemorySiteContent = previousContent;
+          throw new Error(`Site content database update failed: ${error.message}`);
         }
       }
+      await deleteReplacedSiteImages(previousContent, content);
     } catch (e) {
       console.warn('Supabase updateSiteContent warning:', e);
     }
@@ -899,6 +946,26 @@ create table if not exists site_content (
   key text primary key,
   value text
 );
+
+-- 6b. Permanent admin image storage
+insert into storage.buckets (id, name, public)
+values ('site-images', 'site-images', true)
+on conflict (id) do update set public = true;
+
+drop policy if exists "Public can read site images" on storage.objects;
+create policy "Public can read site images"
+on storage.objects for select
+using (bucket_id = 'site-images');
+
+drop policy if exists "Admin app can upload site images" on storage.objects;
+create policy "Admin app can upload site images"
+on storage.objects for insert
+with check (bucket_id = 'site-images');
+
+drop policy if exists "Admin app can replace site images" on storage.objects;
+create policy "Admin app can replace site images"
+on storage.objects for delete
+using (bucket_id = 'site-images');
 
 -- 7. Contact Messages Table
 create table if not exists contact_messages (

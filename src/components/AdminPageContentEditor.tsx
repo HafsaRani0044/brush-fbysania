@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { SiteContent, BespokeFabricTier, FaqItem, BespokeShowcaseItem, BespokeDupattaBanner } from '../types';
 import { INITIAL_BESPOKE_BANNERS } from '../data/seedData';
 import { ImageUploader } from './ImageUploader';
+import { uploadSiteImage } from '../lib/supabase';
 import {
   Sparkles,
   Layers,
@@ -41,6 +42,8 @@ export const AdminPageContentEditor: React.FC<AdminPageContentEditorProps> = ({
   const handleTriggerSave = () => {
     onSave(content);
   };
+
+  const handleUploadImage = (imageDataUrl: string) => uploadSiteImage(imageDataUrl, 'admin');
 
   // Bespoke Fabric Modal / Inline State
   const [editingFabricIndex, setEditingFabricIndex] = useState<number | null>(null);
@@ -500,6 +503,7 @@ export const AdminPageContentEditor: React.FC<AdminPageContentEditorProps> = ({
 
               <div className="sm:col-span-2 bg-[#FFF8F9] p-4 rounded-2xl border border-[#FCE7EB]">
                 <ImageUploader
+                  uploadImage={handleUploadImage}
                   label="Bespoke Hero Image"
                   description="Upload or paste the featured image shown on the bespoke custom page"
                   value={content.bespoke_hero_image_url || ''}
@@ -543,6 +547,7 @@ export const AdminPageContentEditor: React.FC<AdminPageContentEditorProps> = ({
                   />
                 </div>
                 <ImageUploader
+                  uploadImage={handleUploadImage}
                   label="Step 1 Image"
                   value={content.bespoke_step1_img || ''}
                   onChange={(url) => onChange({ ...content, bespoke_step1_img: url as string })}
@@ -572,6 +577,7 @@ export const AdminPageContentEditor: React.FC<AdminPageContentEditorProps> = ({
                   />
                 </div>
                 <ImageUploader
+                  uploadImage={handleUploadImage}
                   label="Step 2 Image"
                   value={content.bespoke_step2_img || ''}
                   onChange={(url) => onChange({ ...content, bespoke_step2_img: url as string })}
@@ -601,6 +607,7 @@ export const AdminPageContentEditor: React.FC<AdminPageContentEditorProps> = ({
                   />
                 </div>
                 <ImageUploader
+                  uploadImage={handleUploadImage}
                   label="Step 3 Image"
                   value={content.bespoke_step3_img || ''}
                   onChange={(url) => onChange({ ...content, bespoke_step3_img: url as string })}
@@ -630,6 +637,7 @@ export const AdminPageContentEditor: React.FC<AdminPageContentEditorProps> = ({
                   />
                 </div>
                 <ImageUploader
+                  uploadImage={handleUploadImage}
                   label="Step 4 Image"
                   value={content.bespoke_step4_img || ''}
                   onChange={(url) => onChange({ ...content, bespoke_step4_img: url as string })}
@@ -730,6 +738,7 @@ export const AdminPageContentEditor: React.FC<AdminPageContentEditorProps> = ({
 
                   <div className="sm:col-span-3 bg-white p-3 rounded-2xl border border-[#FCE7EB]">
                     <ImageUploader
+                      uploadImage={handleUploadImage}
                       label="Fabric Preview Image"
                       description="Upload or paste the image shown on the fabric option card"
                       value={fabricForm.img || ''}
@@ -863,6 +872,7 @@ export const AdminPageContentEditor: React.FC<AdminPageContentEditorProps> = ({
                   </div>
                   <div className="sm:col-span-2 bg-white p-3 rounded-2xl border border-[#FCE7EB]">
                     <ImageUploader
+                      uploadImage={handleUploadImage}
                       label="Style Image *"
                       value={bannerForm.image_url}
                       onChange={(url) => setBannerForm({ ...bannerForm, image_url: url as string })}
@@ -1185,6 +1195,7 @@ export const AdminPageContentEditor: React.FC<AdminPageContentEditorProps> = ({
                   </div>
                   <div className="sm:col-span-2 bg-white p-3 rounded-2xl border border-[#FCE7EB]">
                     <ImageUploader
+                      uploadImage={handleUploadImage}
                       label="Creation Image *"
                       value={showcaseForm.image_url}
                       onChange={(url) => setShowcaseForm({ ...showcaseForm, image_url: url as string })}
@@ -1327,6 +1338,7 @@ export const AdminPageContentEditor: React.FC<AdminPageContentEditorProps> = ({
 
               <div className="sm:col-span-2 bg-[#FFF8F9] p-4 rounded-2xl border border-[#FCE7EB]">
                 <ImageUploader
+                  uploadImage={handleUploadImage}
                   label="Hero 3D Drape Photo"
                   description="Upload or paste image URL showing luxury drape for homepage hero"
                   value={content.hero_image_url || ''}
@@ -1553,6 +1565,7 @@ export const AdminPageContentEditor: React.FC<AdminPageContentEditorProps> = ({
 
               <div className="sm:col-span-2 bg-[#FFF8F9] p-4 rounded-2xl border border-[#FCE7EB] space-y-3">
                 <ImageUploader
+                  uploadImage={handleUploadImage}
                   label="Studio Portrait Photo"
                   description="Upload high-res portrait of Sania or atelier workshop"
                   value={content.about_image_url || ''}
