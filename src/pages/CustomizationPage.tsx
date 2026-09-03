@@ -187,18 +187,16 @@ export const CustomizationPage: React.FC<CustomizationPageProps> = ({ siteConten
     setErrorMessage(null);
 
     const waUrl = generateBespokeRequestWhatsAppUrl({
-      fabric: selectedFabric,
-      technique: selectedTechnique,
-      color: customColorDetail ? `${selectedColor} (${customColorDetail})` : selectedColor,
-      size: selectedSize,
-      tassels: selectedTassels,
+      fabric_choice: selectedFabric,
+      color_choice: customColorDetail ? `${selectedColor} (${customColorDetail})` : selectedColor,
+      size_choice: selectedSize,
+      tassels_option: selectedTassels,
       notes: notes.trim() || undefined,
-      estimatedPrice: estimatedTotal,
-      swatchImageUrl: referenceImg || undefined,
-      customerName: customerName.trim() || undefined,
-      customerContact: customerContact.trim() || undefined,
-      whatsappNumber: directWhatsAppNumber,
-    });
+      estimated_price: estimatedTotal,
+      reference_image_url: referenceImg || undefined,
+      customer_name: customerName.trim() || undefined,
+      customer_contact: customerContact.trim() || undefined,
+    }, directWhatsAppNumber);
 
     setSuccessWaUrl(waUrl);
 
@@ -216,12 +214,16 @@ export const CustomizationPage: React.FC<CustomizationPageProps> = ({ siteConten
     setIsSubmitting(true);
     logCustomizationRequest({
       fabric_type: selectedFabric,
-      color_description: customColorDetail ? `${selectedColor} - ${customColorDetail}` : selectedColor,
-      motif_details: `${selectedTechnique}. Dimensions: ${selectedSize}. Border: ${selectedTassels}. Notes: ${notes}`,
+      color_choice: customColorDetail ? `${selectedColor} - ${customColorDetail}` : selectedColor,
+      size_choice: selectedSize,
+      tassels_option: selectedTassels,
       reference_image_url: referenceImg || undefined,
       customer_name: customerName.trim() || 'Valued Client',
-      customer_phone: customerContact.trim() || undefined,
-      estimated_budget: estimatedTotal,
+      customer_contact: customerContact.trim() || 'Via WhatsApp Chat',
+      notes: `${selectedTechnique}. ${notes}`.trim(),
+      estimated_price: estimatedTotal,
+      status: 'new',
+      whatsapp_sent: true,
     }).catch(err => {
       console.warn('Custom request logging notice:', err);
     }).finally(() => {
