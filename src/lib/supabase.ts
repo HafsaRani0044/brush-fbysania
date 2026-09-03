@@ -35,6 +35,48 @@ const LS_DELETED_CATEGORIES_KEY = 'bnf_deleted_category_ids_v1';
 const LS_GALLERY_KEY = 'bnf_gallery_v1';
 const LS_DELETED_GALLERY_KEY = 'bnf_deleted_gallery_ids_v1';
 const LS_SITE_CONTENT_KEY = 'bnf_site_content_v1';
+const IDB_SITE_CONTENT_DB = 'bnf_site_content_db';
+const IDB_SITE_CONTENT_STORE = 'content';
+
+function readIndexedSiteContent(): Promise<Partial<SiteContent>> {
+  return new Promise((resolve) => {
+    if (typeof indexedDB === 'undefined') {
+      resolve({});
+      return;
+    }
+    const request = indexedDB.open(IDB_SITE_CONTENT_DB, 1);
+    request.onupgradeneeded = () => {
+      request.result.createObjectStore(IDB_SITE_CONTENT_STORE);
+    };
+    request.onsuccess = () => {
+      const transaction = request.result.transaction(IDB_SITE_CONTENT_STORE, 'readonly');
+      const getRequest = transaction.objectStore(IDB_SITE_CONTENT_STORE).get('site_content');
+      getRequest.onsuccess = () => resolve((getRequest.result as Partial<SiteContent>) || {});
+      getRequest.onerror = () => resolve({});
+    };
+    request.onerror = () => resolve({});
+  });
+}
+
+function writeIndexedSiteContent(content: SiteContent): Promise<void> {
+  return new Promise((resolve) => {
+    if (typeof indexedDB === 'undefined') {
+      resolve();
+      return;
+    }
+    const request = indexedDB.open(IDB_SITE_CONTENT_DB, 1);
+    request.onupgradeneeded = () => {
+      request.result.createObjectStore(IDB_SITE_CONTENT_STORE);
+    };
+    request.onsuccess = () => {
+      const transaction = request.result.transaction(IDB_SITE_CONTENT_STORE, 'readwrite');
+      transaction.objectStore(IDB_SITE_CONTENT_STORE).put(content, 'site_content');
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => resolve();
+    };
+    request.onerror = () => resolve();
+  });
+}
 const LS_REQUESTS_KEY = 'bnf_custom_requests_v1';
 const LS_DELETED_REQUESTS_KEY = 'bnf_deleted_request_ids_v1';
 const LS_MESSAGES_KEY = 'bnf_messages_v1';
@@ -425,6 +467,7 @@ export async function getSiteContent(): Promise<SiteContent> {
   } catch (e) {
     console.warn('LocalStorage read error for site content:', e);
   }
+  localData = { ...localData, ...(await readIndexedSiteContent()) };
 
   if (supabase) {
     try {
@@ -461,13 +504,16 @@ export async function updateSiteContent(content: SiteContent): Promise<SiteConte
   // Update in-memory reference immediately
   inMemorySiteContent = { ...content };
 
+  // IndexedDB supports the larger base64 images produced by the admin uploader.
+  await writeIndexedSiteContent(content);
+
   // 1. Immediately persist to localStorage with QuotaExceeded protection
   try {
     localStorage.setItem(LS_SITE_CONTENT_KEY, JSON.stringify(content));
   } catch (err) {
     console.warn('LocalStorage write warning for site content, attempting sanitized write:', err);
     try {
-      // Create lightweight copy stripped of huge base64 strings if storage quota is constrained
+      // Keep a lightweight fallback for browsers with limited IndexedDB support.
       const sanitized = { ...content };
       Object.keys(sanitized).forEach((key) => {
         const val = (sanitized as any)[key];
