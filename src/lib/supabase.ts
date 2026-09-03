@@ -549,30 +549,7 @@ export async function updateSiteContent(content: SiteContent): Promise<SiteConte
   const previousContent = inMemorySiteContent;
   inMemorySiteContent = { ...content };
 
-  // IndexedDB supports the larger base64 images produced by the admin uploader.
-  await writeIndexedSiteContent(content);
-
-  // 1. Immediately persist to localStorage with QuotaExceeded protection
-  try {
-    localStorage.setItem(LS_SITE_CONTENT_KEY, JSON.stringify(content));
-  } catch (err) {
-    console.warn('LocalStorage write warning for site content, attempting sanitized write:', err);
-    try {
-      // Keep a lightweight fallback for browsers with limited IndexedDB support.
-      const sanitized = { ...content };
-      Object.keys(sanitized).forEach((key) => {
-        const val = (sanitized as any)[key];
-        if (typeof val === 'string' && val.length > 20000 && val.startsWith('data:image')) {
-          (sanitized as any)[key] = '';
-        }
-      });
-      localStorage.setItem(LS_SITE_CONTENT_KEY, JSON.stringify(sanitized));
-    } catch (err2) {
-      console.warn('LocalStorage sanitized write also failed:', err2);
-    }
-  }
-
-  // 2. Persist to Supabase if client is active
+  // Persist to Supabase first when configured; browser caches must not mask a failed cloud save.
   if (supabase) {
     try {
       const rows = Object.entries(content)
@@ -592,7 +569,17 @@ export async function updateSiteContent(content: SiteContent): Promise<SiteConte
       await deleteReplacedSiteImages(previousContent, content);
     } catch (e) {
       console.warn('Supabase updateSiteContent warning:', e);
+      inMemorySiteContent = previousContent;
+      throw e;
     }
+  }
+
+  // Cache only after the cloud write succeeds, or when running in local-storage mode.
+  await writeIndexedSiteContent(content);
+  try {
+    localStorage.setItem(LS_SITE_CONTENT_KEY, JSON.stringify(content));
+  } catch (err) {
+    console.warn('LocalStorage write warning for site content:', err);
   }
 
   return inMemorySiteContent;
