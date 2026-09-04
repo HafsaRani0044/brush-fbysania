@@ -290,12 +290,13 @@ export async function saveCategory(category: Category): Promise<Category> {
   if (supabase) {
     try {
       const { data, error } = await supabase.from('categories').upsert(category).select().single();
-      if (!error && data) {
-        updateLocalCategory(data as Category);
-        return data as Category;
-      }
+      if (error) throw new Error(`Collection save failed: ${error.message}`);
+      if (!data) throw new Error('Collection save failed: no collection was returned.');
+      updateLocalCategory(data as Category);
+      return data as Category;
     } catch (e) {
       console.error('Supabase saveCategory error:', e);
+      throw e instanceof Error ? e : new Error('Collection save failed.');
     }
   }
   updateLocalCategory(category);
@@ -456,12 +457,13 @@ export async function saveGalleryItem(item: GalleryItem): Promise<GalleryItem> {
   if (supabase) {
     try {
       const { data, error } = await supabase.from('gallery').upsert(item).select().single();
-      if (!error && data) {
-        updateLocalGallery(data as GalleryItem);
-        return data as GalleryItem;
-      }
+      if (error) throw new Error(`Portfolio save failed: ${error.message}`);
+      if (!data) throw new Error('Portfolio save failed: no portfolio item was returned.');
+      updateLocalGallery(data as GalleryItem);
+      return data as GalleryItem;
     } catch (e) {
       console.error('Supabase saveGalleryItem error:', e);
+      throw e instanceof Error ? e : new Error('Portfolio save failed.');
     }
   }
   updateLocalGallery(item);

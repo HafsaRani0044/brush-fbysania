@@ -1106,6 +1106,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({
                     description="Upload an image or paste a URL for this collection"
                     value={categoryImg}
                     onChange={(url) => setCategoryImg(url as string)}
+                    uploadImage={(imageDataUrl) => uploadSiteImage(imageDataUrl, 'admin')}
                   />
                 </div>
                 <div className="flex items-center gap-2 pt-1">
@@ -1214,6 +1215,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({
                     description="Upload photo from your device or paste URL"
                     value={galleryImg}
                     onChange={(url) => setGalleryImg(url as string)}
+                    uploadImage={(imageDataUrl) => uploadSiteImage(imageDataUrl, 'admin')}
                   />
                 </div>
                 <div>
@@ -1469,6 +1471,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({
                     description="Upload high-res dupatta drape image for homepage hero"
                     value={settingsForm.hero_image_url || 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=1200&q=80'}
                     onChange={(url) => setSettingsForm({ ...settingsForm, hero_image_url: url as string })}
+                    uploadImage={(imageDataUrl) => uploadSiteImage(imageDataUrl, 'admin')}
                   />
                 </div>
 
@@ -1478,6 +1481,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({
                     description="Upload photo of Sania painting or dupatta studio workshop"
                     value={settingsForm.about_image_url || 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=1000&q=80'}
                     onChange={(url) => setSettingsForm({ ...settingsForm, about_image_url: url as string })}
+                    uploadImage={(imageDataUrl) => uploadSiteImage(imageDataUrl, 'admin')}
                   />
                 </div>
               </div>
