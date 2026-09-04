@@ -23,6 +23,7 @@ import {
   ShoppingBag,
 } from 'lucide-react';
 import { generateProductOrderWhatsAppUrl, openWhatsApp } from '../lib/whatsapp';
+import { uploadSiteImage } from '../lib/supabase';
 import { logCustomizationRequest } from '../lib/supabase';
 import confetti from 'canvas-confetti';
 
@@ -447,6 +448,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                 description="Upload your outfit photo so Sania can match the tones"
                 value={referenceImg || ''}
                 onChange={(url) => setReferenceImg(url as string)}
+                uploadImage={(imageDataUrl) => uploadSiteImage(imageDataUrl, 'references')}
               />
             </div>
 

@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Upload, Image as ImageIcon, Link, X, Check, Sparkles, Trash2, Camera } from 'lucide-react';
+import { Upload, Image as ImageIcon, Link, X, Trash2, Camera } from 'lucide-react';
 
 interface ImageUploaderProps {
   value: string | string[];
@@ -12,30 +12,6 @@ interface ImageUploaderProps {
   maxFiles?: number;
   uploadImage?: (imageDataUrl: string) => Promise<string>;
 }
-
-// Preset luxury Pakistani dupatta photos for quick selection if needed
-const PRESET_DUPATTA_PHOTOS = [
-  {
-    name: 'Blush Rose Organza',
-    url: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=1000&q=80',
-  },
-  {
-    name: 'Ivory Gold Nikkah',
-    url: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?auto=format&fit=crop&w=1000&q=80',
-  },
-  {
-    name: 'Emerald Botanical Chiffon',
-    url: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=1000&q=80',
-  },
-  {
-    name: 'Mustard Golden Marigold',
-    url: 'https://images.unsplash.com/photo-1566174053879-31528523f8ae?auto=format&fit=crop&w=1000&q=80',
-  },
-  {
-    name: 'Royal Plum Velvet & Silk',
-    url: 'https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?auto=format&fit=crop&w=1000&q=80',
-  },
-];
 
 // Helper to compress image into lightweight data URL
 export const compressImageFile = (file: File, maxWidth = 960, maxHeight = 960, quality = 0.78): Promise<string> => {
@@ -91,7 +67,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   maxFiles = 6,
   uploadImage,
 }) => {
-  const [activeTab, setActiveTab] = useState<'upload' | 'url' | 'presets'>('upload');
+  const [activeTab, setActiveTab] = useState<'upload' | 'url'>('upload');
   const [urlInput, setUrlInput] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -171,16 +147,6 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
     }
   };
 
-  const handleSelectPreset = (presetUrl: string) => {
-    if (multiple) {
-      if (!currentImages.includes(presetUrl)) {
-        onChange([...currentImages, presetUrl].slice(0, maxFiles));
-      }
-    } else {
-      onChange(presetUrl);
-    }
-  };
-
   return (
     <div className="space-y-3">
       {/* Label and Description */}
@@ -195,7 +161,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
         </div>
       )}
 
-      {/* Mode Tabs (Upload vs Link vs Presets) */}
+      {/* Mode Tabs */}
       <div className="flex items-center gap-1.5 p-1 bg-[#FFF0F3] rounded-xl border border-[#FCE7EB] w-fit text-[11px]">
         <button
           type="button"
@@ -223,18 +189,6 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
           <span>Paste URL</span>
         </button>
 
-        <button
-          type="button"
-          onClick={() => setActiveTab('presets')}
-          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg font-semibold transition-all ${
-            activeTab === 'presets'
-              ? 'bg-white text-[#831843] shadow-2xs font-bold'
-              : 'text-[#7A5A62] hover:text-[#831843]'
-          }`}
-        >
-          <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
-          <span>Atelier Library</span>
-        </button>
       </div>
 
       {/* TAB 1: FILE UPLOAD (DRAG & DROP + BROWSE) */}
@@ -306,7 +260,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
             <Link className="w-3.5 h-3.5 text-[#9D7983] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="url"
-              placeholder="https://images.unsplash.com/..."
+              placeholder="Paste an image URL"
               value={urlInput}
               onChange={(e) => setUrlInput(e.target.value)}
               onKeyDown={(e) => {
@@ -325,37 +279,6 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
           >
             Add URL
           </button>
-        </div>
-      )}
-
-      {/* TAB 3: PRESETS LIBRARY */}
-      {activeTab === 'presets' && (
-        <div className="space-y-2">
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-            {PRESET_DUPATTA_PHOTOS.map((preset, idx) => {
-              const isSelected = currentImages.includes(preset.url);
-              return (
-                <button
-                  type="button"
-                  key={idx}
-                  onClick={() => handleSelectPreset(preset.url)}
-                  className={`relative rounded-xl overflow-hidden border-2 text-left group transition-all ${
-                    isSelected ? 'border-[#BE185D] shadow-xs' : 'border-[#FCE7EB] hover:border-[#F3C5D4]'
-                  }`}
-                >
-                  <img src={preset.url} alt={preset.name} className="w-full h-16 object-cover" />
-                  <div className="p-1.5 bg-white text-[10px] font-semibold text-[#3D2C2E] truncate">
-                    {preset.name}
-                  </div>
-                  {isSelected && (
-                    <div className="absolute top-1 right-1 bg-[#BE185D] text-white rounded-full p-0.5">
-                      <Check className="w-2.5 h-2.5" />
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-          </div>
         </div>
       )}
 

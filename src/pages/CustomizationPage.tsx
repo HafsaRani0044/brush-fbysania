@@ -27,7 +27,7 @@ import {
   Flame,
 } from 'lucide-react';
 import { generateBespokeRequestWhatsAppUrl, openWhatsApp } from '../lib/whatsapp';
-import { logCustomizationRequest } from '../lib/supabase';
+import { logCustomizationRequest, uploadSiteImage } from '../lib/supabase';
 import { ImageUploader } from '../components/ImageUploader';
 import confetti from 'canvas-confetti';
 
@@ -892,6 +892,7 @@ export const CustomizationPage: React.FC<CustomizationPageProps> = ({ siteConten
                     description="Upload JPG, PNG, WebP or paste an image link"
                     value={referenceImg || ''}
                     onChange={(url) => setReferenceImg(url as string)}
+                    uploadImage={(imageDataUrl) => uploadSiteImage(imageDataUrl, 'references')}
                   />
                 </div>
 

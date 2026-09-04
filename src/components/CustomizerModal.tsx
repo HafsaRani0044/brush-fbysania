@@ -3,7 +3,7 @@ import { Product, CustomizationRequest } from '../types';
 import { ImageUploader } from './ImageUploader';
 import { X, Sparkles, MessageCircle, Upload, Check, Palette, Sliders, ShieldCheck, Heart, FileText, ExternalLink } from 'lucide-react';
 import { generateProductOrderWhatsAppUrl, generateBespokeRequestWhatsAppUrl, openWhatsApp } from '../lib/whatsapp';
-import { logCustomizationRequest } from '../lib/supabase';
+import { logCustomizationRequest, uploadSiteImage } from '../lib/supabase';
 import confetti from 'canvas-confetti';
 
 interface CustomizerModalProps {
@@ -322,6 +322,7 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
                 description="Upload your lehenga or fabric swatch"
                 value={referenceImg || ''}
                 onChange={(url) => setReferenceImg(url as string)}
+                uploadImage={(imageDataUrl) => uploadSiteImage(imageDataUrl, 'references')}
               />
             </div>
 

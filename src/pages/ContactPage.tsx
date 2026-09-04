@@ -3,7 +3,7 @@ import { SiteContent } from '../types';
 import { ImageUploader } from '../components/ImageUploader';
 import { MessageCircle, Mail, MapPin, Instagram, Sparkles, Send, CheckCircle2, Clock, Truck, ShieldCheck, ChevronDown, ChevronUp } from 'lucide-react';
 import { generateGeneralInquiryWhatsAppUrl, openWhatsApp } from '../lib/whatsapp';
-import { sendContactMessage } from '../lib/supabase';
+import { sendContactMessage, uploadSiteImage } from '../lib/supabase';
 
 interface ContactPageProps {
   siteContent: SiteContent;
@@ -308,6 +308,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ siteContent }) => {
                   description="Upload your dress or fabric swatch to match colors"
                   value={attachedImage}
                   onChange={(url) => setAttachedImage(url as string)}
+                  uploadImage={(imageDataUrl) => uploadSiteImage(imageDataUrl, 'references')}
                 />
               </div>
 
