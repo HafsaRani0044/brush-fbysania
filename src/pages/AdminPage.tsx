@@ -10,6 +10,7 @@ import {
   updateCustomizationRequestStatus,
   deleteCustomizationRequest,
   saveSiteContent,
+  uploadSiteImage,
   isUserAdmin,
   getActiveAdminEmail,
   adminLogout,
@@ -764,6 +765,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({
                         description="Upload high quality photos of the dupatta. First photo will be the main cover."
                         value={Array.isArray(productForm.images) ? productForm.images : []}
                         onChange={(imgs) => setProductForm({ ...productForm, images: imgs })}
+                        uploadImage={(imageDataUrl) => uploadSiteImage(imageDataUrl, 'products')}
                       />
                     </div>
 

@@ -31,9 +31,16 @@ import { AboutPage } from './pages/AboutPage';
 import { ContactPage } from './pages/ContactPage';
 import { AdminPage } from './pages/AdminPage';
 
+const getInitialPage = (): PageView => {
+  if (typeof window !== 'undefined' && window.location.pathname.replace(/\/$/, '').endsWith('/admin')) {
+    return 'admin';
+  }
+  return 'home';
+};
+
 export const App: React.FC = () => {
   // Navigation & View State
-  const [currentPage, setCurrentPage] = useState<PageView>('home');
+  const [currentPage, setCurrentPage] = useState<PageView>(getInitialPage);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string | undefined>(undefined);
 
@@ -149,6 +156,8 @@ export const App: React.FC = () => {
       setSelectedCategoryFilter(undefined);
     }
     setCurrentPage(page);
+    const path = page === 'home' ? '/' : `/${page}`;
+    window.history.pushState({}, '', path);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 

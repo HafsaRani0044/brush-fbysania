@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { PageView, SiteContent } from '../types';
-import { Sparkles, Heart, Search, Menu, X, MessageCircle, ShieldCheck, Instagram, Sliders, ShoppingBag } from 'lucide-react';
+import { Sparkles, Heart, Search, Menu, X, MessageCircle, Instagram, Sliders, ShoppingBag } from 'lucide-react';
 
 interface NavbarProps {
   currentPage: PageView;
@@ -161,19 +161,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <span>Custom Order</span>
               </button>
 
-              {/* Admin shortcut */}
-              <button
-                id="header-admin-btn"
-                onClick={() => onNavigate('admin')}
-                className={`p-2 rounded-full transition-colors ${
-                  currentPage === 'admin' 
-                    ? 'bg-[#831843] text-white' 
-                    : 'text-[#831843]/60 hover:text-[#831843] hover:bg-[#FCE7EB]'
-                }`}
-                title="Admin Studio"
-              >
-                <ShieldCheck className="w-4 h-4" />
-              </button>
             </div>
           </div>
         </div>

@@ -217,13 +217,15 @@ export async function saveProduct(product: Product): Promise<Product> {
   if (supabase) {
     try {
       const { data, error } = await supabase.from('products').upsert(product).select().single();
-      if (!error && data) {
-        // Also update local cache
-        updateLocalProducts(data as Product);
-        return data as Product;
+      if (error) {
+        throw new Error(`Product save failed: ${error.message}`);
       }
+      if (!data) throw new Error('Product save failed: no product was returned.');
+      updateLocalProducts(data as Product);
+      return data as Product;
     } catch (e) {
       console.error('Supabase saveProduct error:', e);
+      throw e instanceof Error ? e : new Error('Product save failed.');
     }
   }
   updateLocalProducts(product);
@@ -794,51 +796,28 @@ export async function adminLogin(
     return { success: false, error: 'Please enter both Gmail / Email and Password.' };
   }
 
-  // Fetch current credentials from Supabase or cache
-  const creds = await getAdminCredentials();
+  if (!supabase) {
+    return { success: false, error: 'Admin login is unavailable until Supabase is configured.' };
+  }
 
-  // 1. Check Supabase Auth if available
-  if (supabase) {
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: cleanEmail,
-        password: cleanPassword,
-      });
-      if (!error && data.session) {
-        localStorage.setItem(LS_ADMIN_SESSION_KEY, 'true');
-        localStorage.setItem(LS_ADMIN_ACTIVE_EMAIL_KEY, cleanEmail);
-        return { success: true };
-      }
-    } catch {
-      // Fall through to database credential check
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: cleanEmail,
+      password: cleanPassword,
+    });
+    if (!error && data.session) {
+      localStorage.setItem(LS_ADMIN_SESSION_KEY, 'true');
+      localStorage.setItem(LS_ADMIN_ACTIVE_EMAIL_KEY, cleanEmail);
+      return { success: true };
     }
+    return { success: false, error: error?.message || 'Incorrect email or password.' };
+  } catch {
+    return { success: false, error: 'Login failed. Please try again.' };
   }
-
-  // 2. Verify against Supabase database credentials
-  const emailMatches =
-    cleanEmail === creds.email.toLowerCase() ||
-    (cleanEmail === DEFAULT_ADMIN_EMAIL.toLowerCase() && cleanPassword === creds.password);
-
-  const passwordMatches =
-    cleanPassword === creds.password ||
-    (cleanEmail === creds.email.toLowerCase() &&
-      (cleanPassword === 'sania123' || cleanPassword === 'admin' || cleanPassword === 'brushnfabric'));
-
-  if (emailMatches && passwordMatches) {
-    localStorage.setItem(LS_ADMIN_SESSION_KEY, 'true');
-    localStorage.setItem(LS_ADMIN_ACTIVE_EMAIL_KEY, creds.email);
-    return { success: true };
-  }
-
-  return {
-    success: false,
-    error: 'Incorrect Gmail or Password. Please check your credentials and try again.',
-  };
 }
 
 export function isUserAdmin(): boolean {
-  if (typeof window === 'undefined') return false;
-  return localStorage.getItem(LS_ADMIN_SESSION_KEY) === 'true';
+  return false;
 }
 
 export function getActiveAdminEmail(): string {

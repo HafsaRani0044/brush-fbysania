@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Lock, Mail, Eye, EyeOff, ShieldCheck, ArrowLeft, AlertCircle, Sparkles, Database } from 'lucide-react';
-import { adminLogin, isSupabaseConfigured, DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD } from '../lib/supabase';
+import { Lock, Mail, Eye, EyeOff, ShieldCheck, ArrowLeft, AlertCircle, Sparkles } from 'lucide-react';
+import { adminLogin, isSupabaseConfigured } from '../lib/supabase';
 
 interface AdminLoginProps {
   onLoginSuccess: (email: string) => void;
@@ -31,12 +31,6 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleQuickFillDefault = () => {
-    setEmail(DEFAULT_ADMIN_EMAIL);
-    setPassword(DEFAULT_ADMIN_PASSWORD);
-    setErrorMessage(null);
   };
 
   return (
@@ -100,7 +94,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
                   autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="e.g. brushnfabric@gmail.com"
+                  placeholder="Enter admin email address"
                   className="w-full pl-10 pr-4 py-3 rounded-xl border border-[#FCE7EB] bg-white text-[#3D2C2E] placeholder-[#7A5A62]/50 focus:border-[#BE185D] focus:ring-2 focus:ring-[#BE185D]/20 focus:outline-hidden transition-all shadow-2xs"
                 />
               </div>
@@ -163,30 +157,6 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
             </button>
 
           </form>
-
-          {/* Quick Default Helper for initial setup */}
-          <div className="p-3.5 bg-[#FFF8F9] rounded-2xl border border-[#FCE7EB] space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-[#831843] flex items-center gap-1">
-                <Database className="w-3.5 h-3.5 text-[#BE185D]" />
-                <span>Initial / Default Admin Login</span>
-              </span>
-              <button
-                type="button"
-                onClick={handleQuickFillDefault}
-                className="text-[10px] font-bold text-[#BE185D] hover:underline bg-[#FFF0F3] px-2 py-0.5 rounded-lg border border-[#F3C5D4] cursor-pointer"
-              >
-                Auto-Fill
-              </button>
-            </div>
-            <div className="text-[11px] text-[#7A5A62] space-y-0.5">
-              <p><strong className="text-[#3D2C2E]">Gmail:</strong> {DEFAULT_ADMIN_EMAIL}</p>
-              <p><strong className="text-[#3D2C2E]">Password:</strong> {DEFAULT_ADMIN_PASSWORD}</p>
-              <p className="text-[10px] text-[#BE185D] italic pt-1">
-                💡 You can edit and update both your Gmail and password inside the Admin Panel under "Security & Login".
-              </p>
-            </div>
-          </div>
 
           {/* Supabase Status Footer */}
           <div className="pt-2 text-center text-[10px] text-[#7A5A62] flex items-center justify-center gap-1.5">
