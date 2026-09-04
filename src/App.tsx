@@ -300,7 +300,6 @@ export const App: React.FC = () => {
       <Footer
         siteContent={siteContent}
         onNavigate={handleNavigate}
-        onOpenBespoke={() => handleOpenCustomizeModal()}
       />
 
       {/* 4. Floating WhatsApp Action Button */}

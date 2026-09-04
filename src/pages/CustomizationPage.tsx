@@ -213,7 +213,7 @@ export const CustomizationPage: React.FC<CustomizationPageProps> = ({ siteConten
 
     setIsSubmitting(true);
     logCustomizationRequest({
-      fabric_type: selectedFabric,
+      fabric_choice: selectedFabric,
       color_choice: customColorDetail ? `${selectedColor} - ${customColorDetail}` : selectedColor,
       size_choice: selectedSize,
       tassels_option: selectedTassels,
