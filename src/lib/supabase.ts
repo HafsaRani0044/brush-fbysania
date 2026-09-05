@@ -250,14 +250,16 @@ function getLocalProducts(): Product[] {
 }
 
 export async function deleteProduct(id: string): Promise<boolean> {
-  addToDeletedSet(LS_DELETED_PRODUCTS_KEY, id);
   if (supabase) {
     try {
-      await supabase.from('products').delete().eq('id', id);
+      const { error } = await supabase.from('products').delete().eq('id', id);
+      if (error) throw new Error(`Product delete failed: ${error.message}`);
     } catch (e) {
       console.error('Supabase deleteProduct error:', e);
+      throw e instanceof Error ? e : new Error('Product delete failed.');
     }
   }
+  addToDeletedSet(LS_DELETED_PRODUCTS_KEY, id);
   const products = getLocalProducts().filter(p => p.id !== id);
   localStorage.setItem(LS_PRODUCTS_KEY, JSON.stringify(products));
   return true;
@@ -321,14 +323,16 @@ function getLocalCategories(): Category[] {
 }
 
 export async function deleteCategory(id: string): Promise<boolean> {
-  addToDeletedSet(LS_DELETED_CATEGORIES_KEY, id);
   if (supabase) {
     try {
-      await supabase.from('categories').delete().eq('id', id);
+      const { error } = await supabase.from('categories').delete().eq('id', id);
+      if (error) throw new Error(`Collection delete failed: ${error.message}`);
     } catch (e) {
       console.error('Supabase deleteCategory error:', e);
+      throw e instanceof Error ? e : new Error('Collection delete failed.');
     }
   }
+  addToDeletedSet(LS_DELETED_CATEGORIES_KEY, id);
   const cats = getLocalCategories().filter(c => c.id !== id);
   localStorage.setItem(LS_CATEGORIES_KEY, JSON.stringify(cats));
   return true;
@@ -366,12 +370,13 @@ export async function logCustomizationRequest(req: Omit<CustomizationRequest, 'i
   if (supabase) {
     try {
       const { data, error } = await supabase.from('customization_requests').insert([newRecord]).select().single();
-      if (!error && data) {
-        saveLocalRequest(data as CustomizationRequest);
-        return data as CustomizationRequest;
-      }
+      if (error) throw new Error(`Request save failed: ${error.message}`);
+      if (!data) throw new Error('Request save failed: no request was returned.');
+      saveLocalRequest(data as CustomizationRequest);
+      return data as CustomizationRequest;
     } catch (e) {
       console.error('Supabase logRequest error:', e);
+      throw e instanceof Error ? e : new Error('Request save failed.');
     }
   }
 
@@ -400,9 +405,11 @@ function getLocalRequests(): CustomizationRequest[] {
 export async function updateRequestStatus(id: string, status: CustomizationRequest['status']): Promise<boolean> {
   if (supabase) {
     try {
-      await supabase.from('customization_requests').update({ status }).eq('id', id);
+      const { error } = await supabase.from('customization_requests').update({ status }).eq('id', id);
+      if (error) throw new Error(`Order status update failed: ${error.message}`);
     } catch (e) {
       console.error('Supabase updateRequestStatus error:', e);
+      throw e instanceof Error ? e : new Error('Order status update failed.');
     }
   }
   const list = getLocalRequests();
@@ -417,14 +424,16 @@ export async function updateRequestStatus(id: string, status: CustomizationReque
 export const updateCustomizationRequestStatus = updateRequestStatus;
 
 export async function deleteCustomizationRequest(id: string): Promise<boolean> {
-  addToDeletedSet(LS_DELETED_REQUESTS_KEY, id);
   if (supabase) {
     try {
-      await supabase.from('customization_requests').delete().eq('id', id);
+      const { error } = await supabase.from('customization_requests').delete().eq('id', id);
+      if (error) throw new Error(`Request delete failed: ${error.message}`);
     } catch (e) {
       console.error('Supabase deleteRequest error:', e);
+      throw e instanceof Error ? e : new Error('Request delete failed.');
     }
   }
+  addToDeletedSet(LS_DELETED_REQUESTS_KEY, id);
   const list = getLocalRequests().filter(r => r.id !== id);
   localStorage.setItem(LS_REQUESTS_KEY, JSON.stringify(list));
   return true;
@@ -488,14 +497,16 @@ function getLocalGallery(): GalleryItem[] {
 }
 
 export async function deleteGalleryItem(id: string): Promise<boolean> {
-  addToDeletedSet(LS_DELETED_GALLERY_KEY, id);
   if (supabase) {
     try {
-      await supabase.from('gallery').delete().eq('id', id);
+      const { error } = await supabase.from('gallery').delete().eq('id', id);
+      if (error) throw new Error(`Portfolio delete failed: ${error.message}`);
     } catch (e) {
       console.error('Supabase deleteGalleryItem error:', e);
+      throw e instanceof Error ? e : new Error('Portfolio delete failed.');
     }
   }
+  addToDeletedSet(LS_DELETED_GALLERY_KEY, id);
   const items = getLocalGallery().filter(g => g.id !== id);
   localStorage.setItem(LS_GALLERY_KEY, JSON.stringify(items));
   return true;
@@ -602,9 +613,12 @@ export async function sendContactMessage(msg: Omit<ContactMessage, 'id' | 'creat
   if (supabase) {
     try {
       const { data, error } = await supabase.from('contact_messages').insert([newMsg]).select().single();
-      if (!error && data) return data as ContactMessage;
+      if (error) throw new Error(`Contact message save failed: ${error.message}`);
+      if (!data) throw new Error('Contact message save failed: no message was returned.');
+      return data as ContactMessage;
     } catch (e) {
       console.error('Supabase sendContactMessage error:', e);
+      throw e instanceof Error ? e : new Error('Contact message save failed.');
     }
   }
   const messages: ContactMessage[] = getLocalMessages();
@@ -731,18 +745,15 @@ export async function updateAdminCredentials(
     updated_at: new Date().toISOString(),
   };
 
-  // 1. Immediately cache locally
-  try {
-    localStorage.setItem(LS_ADMIN_CREDENTIALS_KEY, JSON.stringify(updatedCreds));
-    localStorage.setItem(LS_ADMIN_ACTIVE_EMAIL_KEY, cleanEmail);
-  } catch (e) {
-    console.warn('LocalStorage error writing admin credentials:', e);
-  }
-
-  // 2. If Supabase is connected, update Supabase tables
+  // Persist to Supabase first when configured.
   if (supabase) {
     try {
-      // Upsert into admin_credentials table
+      const { error: authError } = await supabase.auth.updateUser({
+        email: cleanEmail,
+        password: cleanPassword,
+      });
+      if (authError) throw new Error(`Authentication update failed: ${authError.message}`);
+
       const { error: credsError } = await supabase.from('admin_credentials').upsert(
         {
           id: 'primary',
@@ -752,36 +763,30 @@ export async function updateAdminCredentials(
         },
         { onConflict: 'id' }
       );
+      if (credsError) throw new Error(`Credential record update failed: ${credsError.message}`);
 
-      if (credsError) {
-        console.warn('Supabase admin_credentials upsert note:', credsError.message);
-      }
-
-      // Also upsert into site_content table for multi-table redundancy
-      await supabase.from('site_content').upsert(
+      const { error: contentError } = await supabase.from('site_content').upsert(
         [
           { key: 'admin_email', value: cleanEmail },
           { key: 'admin_password', value: cleanPassword },
         ],
         { onConflict: 'key' }
       );
-
-      // If Supabase Auth is active, attempt to update current auth user if signed in
-      try {
-        await supabase.auth.updateUser({
-          email: cleanEmail,
-          password: cleanPassword,
-        });
-      } catch {
-        // Non-blocking if auth user doesn't exist
-      }
+      if (contentError) throw new Error(`Site credential update failed: ${contentError.message}`);
     } catch (e: any) {
       console.error('Supabase updateAdminCredentials error:', e);
       return {
-        success: true,
-        error: 'Saved locally, but Supabase table update encountered an issue: ' + (e?.message || 'Network notice'),
+        success: false,
+        error: e?.message || 'Admin credentials could not be saved.',
       };
     }
+  }
+
+  try {
+    localStorage.setItem(LS_ADMIN_CREDENTIALS_KEY, JSON.stringify(updatedCreds));
+    localStorage.setItem(LS_ADMIN_ACTIVE_EMAIL_KEY, cleanEmail);
+  } catch (e) {
+    console.warn('LocalStorage error writing admin credentials:', e);
   }
 
   return { success: true };
